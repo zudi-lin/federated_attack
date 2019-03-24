@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from model import *
+from model.cifar import *
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
@@ -66,13 +66,13 @@ class GenAdv(object):
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, eps, data, target):
+    def generate_adv(self, data, target, eps=0.03):
         '''
         eps: the learning rate to generate adversary example
         data: the inpout initial data
         target:  the targets (labels) of the input data
         '''
-        if self.method = 'fgsm':
+        if self.method == 'fgsm':
             data_adv, target_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, target, self.device)
             
             
@@ -81,9 +81,17 @@ class GenAdv(object):
        
 ### Debugging
 if __init__ == 'main':
-    net = cifar.vgg.VGG('VGG11')
+    net =  VGG('VGG11')
     x = torch.randn(2,3,32,32)
     y = net(x)
+    y = y.max(1, keepdim=True)[1]
     print(y.size())
+    criterion = F.cross_entropy
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    Generate_Adv = GenAdv(net, device, criterion)
+    data_adv, _ = Generate_Adv.generate_adv(x, y)
+    print(x)
+    print(data_adv)
+  
 
 
