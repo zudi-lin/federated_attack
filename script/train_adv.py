@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from model.cifar import *
+from model.cifar import VGG
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
