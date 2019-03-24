@@ -13,10 +13,10 @@ from torch.autograd import Variable
 from torchvision.utils import save_image
 
 class AdvSolver(object):
-    def __init__ (self, net, eps, loss):
+    def __init__ (self, net, eps, criterion):
         self.net = net
         self.eps = eps
-        self.loss = loss
+        self.criterion = criterion
         
     def fgsm(self, x, target, device, x_val_min = -1., x_val_max = 1.):
         '''
@@ -31,7 +31,7 @@ class AdvSolver(object):
         y_adv = self.net(x_adv)
         
         # Calculate the loss
-        cost = self.loss(y_adv, target)
+        loss = self.criterion(y_adv, target)
         
         # Zero all existing gradients
         self.net.zero_grad()
@@ -39,7 +39,7 @@ class AdvSolver(object):
             x_adv.grad.data.fill_(0)
             
         # Calculate gradients of model in backward pass
-        cost.backward()
+        loss.backward()
         
         # Collect datagrad
         x_adv_grad = x_adv.grad.data
@@ -56,14 +56,14 @@ class AdvSolver(object):
     
 
 class GenAdv(object):
-    def __init__(self, net, device, loss, adv_iter=100, method='fgsm'):
+    def __init__(self, net, device, criterion, adv_iter=100, method='fgsm'):
         self.net = net
         self.device = device
         self.adv_iter = adv_iter
         self.method = method
         
-        # define loss function, e.g. cross_entropy
-        self.loss = loss
+        # define criterion function, e.g. cross_entropy
+        self.criterion = criterion
         
     def generate_adv(self, eps, data, target):
         '''
@@ -72,7 +72,7 @@ class GenAdv(object):
         target:  the targets (labels) of the input data
         '''
         if self.method = 'fgsm':
-            data_adv, target_adv = AdvSolver(self.net, eps, self.loss).fgsm(data, target, self.device)
+            data_adv, target_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, target, self.device)
             
             
         return data_adv, target_adv
