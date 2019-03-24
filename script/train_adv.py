@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from model.cifar.vgg import VGG
+from model.cifar import *
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
@@ -81,10 +81,13 @@ class GenAdv(object):
        
 ### Debugging
 if __init__ == 'main':
-    net =   VGG('VGG11')
+    net =  VGG('VGG11')
     x = torch.randn(2,3,32,32)
     y = net(x)
-    criterion = F.cross_entropy
     print(y.size())
+    criterion = F.cross_entropy
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    Generate_Adv = GenAdv(net, device, criterion)
+  
 
 
