@@ -114,6 +114,7 @@ dmypy.json
 .pyre/
 
 # data
+data/
 *.h5
 logs/
 outputs/
