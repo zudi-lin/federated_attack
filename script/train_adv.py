@@ -67,7 +67,7 @@ class GenAdv(object):
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, target, eps=0.001):
+    def generate_adv(self, data, target, eps=0.01):
         '''
         eps: the learning rate to generate adversary example
         data: the inpout initial data
