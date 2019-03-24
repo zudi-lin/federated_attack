@@ -84,10 +84,14 @@ if __init__ == 'main':
     net =  VGG('VGG11')
     x = torch.randn(2,3,32,32)
     y = net(x)
+    y = y.max(1, keepdim=True)[1]
     print(y.size())
     criterion = F.cross_entropy
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     Generate_Adv = GenAdv(net, device, criterion)
+    data_adv, _ = Generate_Adv.generate_adv(x, y)
+    print(x)
+    print(data_adv)
   
 
 
