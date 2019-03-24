@@ -9,8 +9,9 @@ import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.autograd import Variable
 from torchvision.utils import save_image
+
+from model import *
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
@@ -22,12 +23,12 @@ class AdvSolver(object):
         '''
         x: input image data
         target: labels (target) of the input data
-        val_min: the lower bound of the input data
-        val_max: the upper bound of the input data
+        x_val_min: the lower bound of the input data
+        x_val_max: the upper bound of the input data
         '''
-        x, target = x.to(device), target.to(device)
-                
-        x_adv = Variable(x.data, requires_grad=True)
+        x_adv, target = x.to(device), target.to(device)       
+               
+        x_adv.requires_grad = True
         y_adv = self.net(x_adv)
         
         # Calculate the loss
@@ -78,3 +79,11 @@ class GenAdv(object):
         return data_adv, target_adv
             
        
+### Debugging
+if __init__ == 'main':
+    net = cifar.vgg.VGG('VGG11')
+    x = torch.randn(2,3,32,32)
+    y = net(x)
+    print(y.size())
+
+
