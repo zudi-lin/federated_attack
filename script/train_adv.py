@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
 ## Import Python packages
-import sys
+import sys, os
+sys.path.append(os.path.abspath('../'))
+
 import numpy as np
 
 ## Import pytorch packages
@@ -19,14 +21,13 @@ class AdvSolver(object):
         self.eps = eps
         self.criterion = criterion
         
-    def fgsm(self, x, target, device, x_val_min = -1., x_val_max = 1.):
+    def fgsm(self, x_adv, target, device, x_val_min = -1., x_val_max = 1.):
         '''
-        x: input image data
+        x_adv: input image data
         target: labels (target) of the input data
         x_val_min: the lower bound of the input data
         x_val_max: the upper bound of the input data
         '''
-        x_adv, target = x.to(device), target.to(device)       
                
         x_adv.requires_grad = True
         y_adv = self.net(x_adv)
@@ -66,7 +67,7 @@ class GenAdv(object):
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, target, eps=0.03):
+    def generate_adv(self, data, target, eps=0.01):
         '''
         eps: the learning rate to generate adversary example
         data: the inpout initial data
@@ -80,18 +81,19 @@ class GenAdv(object):
             
        
 ### Debugging
-if __init__ == 'main':
-    net =  VGG('VGG11')
-    x = torch.randn(2,3,32,32)
-    y = net(x)
-    y = y.max(1, keepdim=True)[1]
+if __name__ == "__main__":
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    net = VGG('VGG11').to(device)
+    x = torch.randn(2,3,32,32).to(device)
+    y = net(x).to(device)
+    print(y.size())
+    y = y.max(1, keepdim=False)[1]
     print(y.size())
     criterion = F.cross_entropy
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     Generate_Adv = GenAdv(net, device, criterion)
     data_adv, _ = Generate_Adv.generate_adv(x, y)
-    print(x)
-    print(data_adv)
+    # print(x)
+    print(torch.sum(torch.abs(x-data_adv)))
   
 
 
