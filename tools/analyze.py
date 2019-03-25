@@ -18,8 +18,13 @@ import torchvision.transforms as transforms
 
 import argparse
 
-from model.imagenet import *
-model = resnet34(pretrained=True)
+def intra_feature_correlation(X):
+    # correlation between feature maps at a conv layer
+    pass
+
+def inter_feature_correlation(X,Y):
+    # correlation between feature maps from different model
+    pass
 
 def visualize_layer(X):
     X_tsne = TSNE(n_components=2).fit_transform(X)
@@ -51,21 +56,29 @@ def similarity(X1, X2):
     plt.imshow(diff_abs[:20,:20])
     plt.show()
 
+def get_weights(model):
+    conv_weights = []
+    for param_tensor in model.state_dict():
+        if 'conv' in str(param_tensor):
+            tensor_size = model.state_dict()[param_tensor].size()
+            if tensor_size[2]==3:
+                print(param_tensor, '\t', tensor_size)
+                weight0 = model.state_dict()[param_tensor].numpy()
+                weight1 = np.reshape(weight0, (tensor_size[0]*tensor_size[1],9))
+                assert (weight0[0,0].reshape(9)-weight1[0]).sum()==0
+                conv_weights.append(weight1)
 
-conv_weights = []
-for param_tensor in model.state_dict():
-    if 'conv' in str(param_tensor):
-        tensor_size = model.state_dict()[param_tensor].size()
-        if tensor_size[2]==3:
-            print(param_tensor, '\t', tensor_size)
-            weight0 = model.state_dict()[param_tensor].numpy()
-            weight1 = np.reshape(weight0, (tensor_size[0]*tensor_size[1],9))
-            assert (weight0[0,0].reshape(9)-weight1[0]).sum()==0
-            conv_weights.append(weight1)
+    print('number of 3x3 conv layer: ', len(conv_weights))
+    all_weights = np.concatenate(conv_weights, 0)
+    print(all_weights.shape)
+    print(all_weights.mean())
+    print(np.abs(all_weights).mean())
+    print((np.abs(all_weights)>0.001).sum()/all_weights.shape[0])
 
-print('number of 3x3 conv layer: ', len(conv_weights))
-all_weights = np.concatenate(conv_weights, 0)
-print(all_weights.shape)
-print(all_weights.mean())
-print(np.abs(all_weights).mean())
-print((np.abs(all_weights)>0.001).sum()/all_weights.shape[0])
+if __name__ == '__main__':
+    from model.imagenet import *
+    model = resnet34(pretrained=True)
+    print('model type: ', model.__class__.__name__)
+
+    get_weights(model)
+    
