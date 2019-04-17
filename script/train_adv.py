@@ -21,10 +21,12 @@ class AdvSolver(object):
         self.eps = eps
         self.criterion = criterion
         
-    def fgsm(self, x_adv, target, device, x_val_min = -1., x_val_max = 1.):
+    def fgsm(self, x_adv, y, device, target=True, x_val_min = -1., x_val_max = 1.):
         '''
+        Implementation of Fast Gradient Sign Method 
         x_adv: input image data
-        target: labels (target) of the input data
+        y: labels (target) of the input data
+        target: boolen function to indicate whether we 
         x_val_min: the lower bound of the input data
         x_val_max: the upper bound of the input data
         '''
@@ -33,7 +35,10 @@ class AdvSolver(object):
         y_adv = self.net(x_adv)
         
         # Calculate the loss
-        loss = self.criterion(y_adv, target)
+        if target:
+            loss = self.criterion(y_adv, y)
+        else:
+            loss = - self.criterion(y_adv, y)
         
         # Zero all existing gradients
         self.net.zero_grad()
@@ -55,7 +60,35 @@ class AdvSolver(object):
         y_adv_pred = y_adv.max(1, keepdim=True)[1] # get the index of the max log-probability
 
         return x_adv, y_adv_pred
-    
+        
+    def i_fgsm(self, x_adv, y, device, target=True, alpha=1., iteration=1, x_val_min = -1., x_val_max = 1.):
+        
+        x_adv.requires_grad = True
+        for i in range(iteration):
+            y_adv = self.net(x_adv)
+            if target:
+                loss = self.criterion(y_adv, y)
+            else:
+                loss = -self.criterion(y_adv, y)
+
+            self.net.zero_grad()
+            if x_adv.grad is not None:
+                x_adv.grad.data.fill_(0)
+            loss.backward()
+
+            x_adv.grad.sign_()
+            x_adv = x_adv + alpha * x_adv.grad
+            x_adv = where(x_adv > x+self.eps, x+self.eps, x_adv)
+            x_adv = where(x_adv < x-self.eps, x-self.eps, x_adv)
+            x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
+            x_adv = Variable(x_adv.data, requires_grad=True)
+
+        h = self.net(x)
+        y_adv = self.net(x_adv)
+        y_adv_pred = y_adv.max(1, keepdim=True)[1] # get the index of the max log-probability
+
+        return x_adv, y_adv_pred
+        
 
 class GenAdv(object):
     def __init__(self, net, device, criterion, adv_iter=100, method='fgsm'):
