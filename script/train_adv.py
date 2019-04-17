@@ -62,7 +62,7 @@ class AdvSolver(object):
         return x_adv, y_adv_pred
         
     def i_fgsm(self, x_adv, y, device, target=True, alpha=1., iteration=1, x_val_min = -1., x_val_max = 1.):
-        
+        x = x_adv.clone()
         x_adv.requires_grad = True
         for i in range(iteration):
             y_adv = self.net(x_adv)
@@ -76,14 +76,19 @@ class AdvSolver(object):
                 x_adv.grad.data.fill_(0)
             loss.backward()
 
-            x_adv.grad.sign_()
-            x_adv = x_adv + alpha * x_adv.grad
+            # x_adv.grad.sign_()
+            # x_adv = x_adv + alpha * x_adv.grad
+            
+            # Collect datagrad
+            x_adv_grad = x_adv.grad.data
+            
+            x_adv = x_adv + alpha * x_adv_grad.sign()
             x_adv = where(x_adv > x+self.eps, x+self.eps, x_adv)
             x_adv = where(x_adv < x-self.eps, x-self.eps, x_adv)
             x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
-            x_adv = Variable(x_adv.data, requires_grad=True)
+            
+            x_adv.requires_grad = True
 
-        h = self.net(x)
         y_adv = self.net(x_adv)
         y_adv_pred = y_adv.max(1, keepdim=True)[1] # get the index of the max log-probability
 
@@ -93,6 +98,7 @@ class AdvSolver(object):
 class GenAdv(object):
     def __init__(self, net, device, criterion, adv_iter=100, method='fgsm'):
         self.net = net
+        self.net.eval()
         self.device = device
         self.adv_iter = adv_iter
         self.method = method
@@ -100,17 +106,18 @@ class GenAdv(object):
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, target, eps=0.01):
+    def generate_adv(self, data, y, target=True, eps=0.01):
         '''
         eps: the learning rate to generate adversary example
         data: the inpout initial data
-        target:  the targets (labels) of the input data
+        y:  the targets (labels) of the input data
         '''
         if self.method == 'fgsm':
-            data_adv, target_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
+        elif self.method == 'i_fgsm':
+            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
             
-            
-        return data_adv, target_adv
+        return x_adv, y_adv
             
        
 ### Debugging
