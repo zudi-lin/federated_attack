@@ -116,9 +116,9 @@ class GenAdv(object):
         y:  the targets (labels) of the input data
         '''
         if self.method == 'fgsm':
-            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).fgsm(data, y, target=target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).fgsm(data, y, self.device, target=target)
         elif self.method == 'i_fgsm':
-            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).i_fgsm(data, y, target=target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).i_fgsm(data, y, self.device, target=target)
         
         if target:
             return x_adv, y_adv, y
@@ -126,7 +126,7 @@ class GenAdv(object):
             return x_adv, y_adv
  
     def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
-        if method = 'uniform'
+        if method == 'uniform'：
             x_adv_aggregate = x + torch.mean(adv_noise)
             x_adv_aggregate = where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
             x_adv_aggregate = where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
@@ -192,9 +192,3 @@ if __name__ == "__main__":
         cv2.imwrite('../generated_images/noise_image_' + str(i) + '.jpg', noise_image[i])
         cv2.imwrite('../generated_images/recreated_image_' + str(i) + '.jpg', recreated_image[i])
     
-    
-    
-    
-    
-
-
