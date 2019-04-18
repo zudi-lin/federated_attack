@@ -126,7 +126,7 @@ class GenAdv(object):
             return x_adv, y_adv
  
     def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
-        if method == 'uniform'：
+        if method == 'uniform':
             x_adv_aggregate = x + torch.mean(adv_noise)
             x_adv_aggregate = where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
             x_adv_aggregate = where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
