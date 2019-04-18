@@ -8,10 +8,13 @@ import numpy as np
 
 ## Import pytorch packages
 
+import cv2
+
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
+from utlis import recreate_image
 
 from model.cifar import *
 
@@ -53,7 +56,7 @@ class AdvSolver(object):
         
         # FGSM step: only one gradient ascent step
         x_adv = x_adv - self.eps * x_adv_grad.sign()
-        x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
+        # x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
 
         
         y_adv = self.net(x_adv)
@@ -85,7 +88,7 @@ class AdvSolver(object):
             x_adv = x_adv - alpha * x_adv_grad.sign()
             x_adv = where(x_adv > x+self.eps, x+self.eps, x_adv)
             x_adv = where(x_adv < x-self.eps, x-self.eps, x_adv)
-            x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
+            # x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
             
             x_adv.requires_grad = True
 
@@ -131,24 +134,66 @@ class GenAdv(object):
         return x_adv_aggregate
     
        
-### Debugging
+# main code
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     # Preparing data, decompose the features and labels.
-    # x, y = 
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
     
-    nets = [densenet_cifar.to(device), resnet34.to(device), VGG('VGG11').to(device)]
+    testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=10, shuffle=False, num_workers=2)
+
+    for _, (x, y) in enumerate(testloader):
+        x, y = x.to(device), y.to(device)
+        break
+    
+    print(y)
+    dir_name = 'model/cifar/pretrained/checkpoint'
+
+    # Load DenseNet
+    densenet = DenseNet121().to(device)
+    dense_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    densenet.load_state_dict(dense_checkpoint['net'])
+    
+    # Load ResNet
+    resnet = ResNet18().to(device)
+    res_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    resnet.load_state_dict(res_checkpoint['net'])
+    
+    # Load MobileNet
+    mobilenet = MobileNet().to(device)
+    mobile_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    mobilenet.load_state_dict(mobile_checkpoint['net'])
+    
+    nets = [densenet, resnet, mobilenet]
     adv_noise = torch.tensor([], device=device)
     for i in range(nets):
         net = nets[i]
         criterion = F.cross_entropy
         Generate_Adv = GenAdv(net, device, criterion)
-        x_adv, _ = Generate_Adv.generate_adv(x, y)
+        x_adv, y_adv = Generate_Adv.generate_adv(x, y)
         
+        print(y_adv)
         adv_noise = torch.cat([adv_noise, x_adv - x])
     
-    x_adv_aggregate = aggregate_adv_noise(x, adv_noise)
+    x_adv_aggregate = Generate_Adv.aggregate_adv_noise(x, adv_noise)
+    recreated_image = recreate_image(x_adv_aggregate)
+    
+    noise_image = recreated_image - x
+    
+    if not os.path.exists('../generated_images'):
+            os.makedirs('../generated_images')
+    
+    for i in range(len(recreated_image)):
+        cv2.imwrite('../generated_images/noise_image_' + str(i) + '.jpg', noise_image[i])
+        cv2.imwrite('../generated_images/recreated_image_' + str(i) + '.jpg', recreated_image[i])
+    
+    
+    
     
     
 
