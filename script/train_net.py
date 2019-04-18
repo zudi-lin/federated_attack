@@ -26,7 +26,7 @@ parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = ('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
@@ -61,12 +61,15 @@ print('==> Building model..')
 # net = GoogLeNet()
 # net = DenseNet121()
 # net = ResNeXt29_2x64d()
-# net = MobileNet()
+net = MobileNet()
 # net = MobileNetV2()
 # net = DPN92()
 # net = ShuffleNetG2()
 # net = SENet18()
-net = ShuffleNetV2(1)
+# net = ShuffleNetV2(1)
+model_name = net.__class__.__name__
+print('model: ', model_name)
+
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -83,6 +86,7 @@ if args.resume:
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[150, 250], gamma=0.1)
 
 # Training
 def train(epoch):
@@ -136,12 +140,12 @@ def test(epoch):
             'acc': acc,
             'epoch': epoch,
         }
-        if not os.path.isdir('../outputs/checkpoint'):
-            os.mkdir('../outputs/checkpoint')
-        torch.save(state, '../outputs/checkpoint/ckpt.t7')
+        if not os.path.isdir('../outputs/checkpoint/'):
+            os.makedirs('../outputs/checkpoint/')
+        torch.save(state, '../outputs/checkpoint/'+str(model_name)+'.t7')
         best_acc = acc
 
-
-for epoch in range(start_epoch, start_epoch+200):
+for epoch in range(start_epoch, start_epoch+350):
+    scheduler.step()
     train(epoch)
     test(epoch)
