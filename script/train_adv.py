@@ -13,7 +13,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from model.imagenet import *
+from model.cifar import *
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
@@ -96,44 +96,60 @@ class AdvSolver(object):
         
 
 class GenAdv(object):
-    def __init__(self, net, device, criterion, adv_iter=100, method='fgsm'):
+    def __init__(self, net, device, criterion, eps=0.01, adv_iter=100, method='fgsm'):
         self.net = net
         self.net.eval()
         self.device = device
         self.adv_iter = adv_iter
         self.method = method
+        self.eps = eps
         
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, y, target=False, eps=0.01):
+    def generate_adv(self, data, y, target=False):
         '''
-        eps: the learning rate to generate adversary example
         data: the inpout initial data
         y:  the targets (labels) of the input data
         '''
         if self.method == 'fgsm':
-            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).fgsm(data, y, target=target, self.device)
         elif self.method == 'i_fgsm':
-            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).i_fgsm(data, y, target=target, self.device)
-            
-        return x_adv, y_adv
-            
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).i_fgsm(data, y, target=target, self.device)
+        
+        if target:
+            return x_adv, y_adv, y
+        else: 
+            return x_adv, y_adv
+ 
+    def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
+        if method = 'uniform'
+            x_adv_aggregate = x + torch.mean(adv_noise)
+            x_adv_aggregate = where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
+            x_adv_aggregate = where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+        
+        return x_adv_aggregate
+    
        
 ### Debugging
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net = resnet34(pretrained=True).to(device)
-    x = torch.randn(2,3,32,32).to(device)
-    y = net(x).to(device)
-    print(y.size())
-    y = y.max(1, keepdim=False)[1]
-    print(y.size())
-    criterion = F.cross_entropy
-    Generate_Adv = GenAdv(net, device, criterion)
-    data_adv, _ = Generate_Adv.generate_adv(x, y)
-    # print(x)
-    print(torch.sum(torch.abs(x-data_adv)))
-  
+    
+    # Preparing data, decompose the features and labels.
+    # x, y = 
+    
+    nets = [densenet_cifar.to(device), resnet34.to(device), VGG('VGG11').to(device)]
+    adv_noise = torch.tensor([], device=device)
+    for i in range(nets):
+        net = nets[i]
+        criterion = F.cross_entropy
+        Generate_Adv = GenAdv(net, device, criterion)
+        x_adv, _ = Generate_Adv.generate_adv(x, y)
+        
+        adv_noise = torch.cat([adv_noise, x_adv - x])
+    
+    x_adv_aggregate = aggregate_adv_noise(x, adv_noise)
+    
+    
 
 
