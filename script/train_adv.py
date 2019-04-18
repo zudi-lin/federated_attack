@@ -16,7 +16,6 @@ import torch.nn.functional as F
 from torchvision.utils import save_image
 import torchvision
 import torchvision.transforms as transforms
-import torch.where as where
 
 from utils import recreate_image
 
@@ -90,8 +89,8 @@ class AdvSolver(object):
             x_adv_grad = x_adv.grad.data
             
             x_adv = x_adv - alpha * x_adv_grad.sign()
-            x_adv = where(x_adv > x+self.eps, x+self.eps, x_adv)
-            x_adv = where(x_adv < x-self.eps, x-self.eps, x_adv)
+            x_adv = torch.where(x_adv > x+self.eps, x+self.eps, x_adv)
+            x_adv = torch.where(x_adv < x-self.eps, x-self.eps, x_adv)
             # x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
             
             x_adv.requires_grad = True
@@ -132,8 +131,8 @@ class GenAdv(object):
     def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
         if method == 'uniform':
             x_adv_aggregate = x + torch.mean(adv_noise)
-            x_adv_aggregate = where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
-            x_adv_aggregate = where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+            x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
+            x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
         
         return x_adv_aggregate
     
