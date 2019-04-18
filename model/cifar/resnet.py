@@ -6,10 +6,12 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 '''
+# resnet
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torchvision.models as models
+import torch.utils.model_zoo as model_zoo
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -96,7 +98,6 @@ class ResNet(nn.Module):
         out = self.linear(out)
         return out
 
-
 def ResNet18():
     return ResNet(BasicBlock, [2,2,2,2])
 
@@ -112,10 +113,11 @@ def ResNet101():
 def ResNet152():
     return ResNet(Bottleneck, [3,8,36,3])
 
-
 def test():
     net = ResNet18()
-    y = net(torch.randn(1,3,32,32))
+    y = net(torch.randn(8,3,32,32))
     print(y.size())
 
 # test()
+if __name__ == '__main__':
+    test()

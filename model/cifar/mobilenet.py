@@ -54,8 +54,9 @@ class MobileNet(nn.Module):
 
 def test():
     net = MobileNet()
-    x = torch.randn(1,3,32,32)
-    y = net(x)
+    y = net(torch.randn(8,3,32,32))
     print(y.size())
 
 # test()
+if __name__ == '__main__':
+    test()
