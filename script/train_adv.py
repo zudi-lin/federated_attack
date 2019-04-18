@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from torchvision.utils import save_image
 import torchvision
 import torchvision.transforms as transforms
+import torch.where as where
 
 from utils import recreate_image
 
@@ -174,7 +175,7 @@ if __name__ == "__main__":
     
     nets = [densenet, resnet, mobilenet]
     adv_noise = torch.tensor([], device=device)
-    for i in range(nets):
+    for i in range(len(nets)):
         net = nets[i]
         criterion = F.cross_entropy
         Generate_Adv = GenAdv(net, device, criterion)

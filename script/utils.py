@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import math
+import copy
 
 import torch.nn as nn
 import torch.nn.init as init
