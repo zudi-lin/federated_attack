@@ -96,36 +96,39 @@ class AdvSolver(object):
         
 
 class GenAdv(object):
-    def __init__(self, net, device, criterion, adv_iter=100, method='fgsm'):
+    def __init__(self, net, device, criterion, eps=0.01, adv_iter=100, method='fgsm'):
         self.net = net
         self.net.eval()
         self.device = device
         self.adv_iter = adv_iter
         self.method = method
+        self.eps = eps
         
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, y, target=False, eps=0.01):
+    def generate_adv(self, data, y, target=False):
         '''
-        eps: the learning rate to generate adversary example
         data: the inpout initial data
         y:  the targets (labels) of the input data
         '''
         if self.method == 'fgsm':
-            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).fgsm(data, y, target=target, self.device)
         elif self.method == 'i_fgsm':
-            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).i_fgsm(data, y, target=target, self.device)
-            
-        return x_adv, y_adv
+            x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).i_fgsm(data, y, target=target, self.device)
+        
+        if target:
+            return x_adv, y_adv, y
+        else: 
+            return x_adv, y_adv
  
-def aggregate_adv_noise(x, adv_noise, method='uniform'):
-    if method = 'uniform'
-        x_adv_aggregate = x + torch.mean(adv_noise)
-    
-    return x_adv_aggregate
-    
-    
+    def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
+        if method = 'uniform'
+            x_adv_aggregate = x + torch.mean(adv_noise)
+            x_adv_aggregate = where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
+            x_adv_aggregate = where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+        
+        return x_adv_aggregate
     
        
 ### Debugging
