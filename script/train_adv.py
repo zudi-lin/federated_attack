@@ -14,7 +14,10 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
-from utlis import recreate_image
+import torchvision
+import torchvision.transforms as transforms
+
+from utils import recreate_image
 
 from model.cifar import *
 
@@ -161,12 +164,12 @@ if __name__ == "__main__":
     
     # Load ResNet
     resnet = ResNet18().to(device)
-    res_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    res_checkpoint = torch.load(dir_name + '/ResNet.t7')
     resnet.load_state_dict(res_checkpoint['net'])
     
     # Load MobileNet
     mobilenet = MobileNet().to(device)
-    mobile_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    mobile_checkpoint = torch.load(dir_name + '/MobileNet.t7')
     mobilenet.load_state_dict(mobile_checkpoint['net'])
     
     nets = [densenet, resnet, mobilenet]
