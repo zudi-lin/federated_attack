@@ -13,7 +13,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from model.cifar import VGG
+from model.imagenet import *
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
@@ -21,7 +21,7 @@ class AdvSolver(object):
         self.eps = eps
         self.criterion = criterion
         
-    def fgsm(self, x_adv, y, device, target=True, x_val_min = -1., x_val_max = 1.):
+    def fgsm(self, x_adv, y, device, target=False, x_val_min = -1., x_val_max = 1.):
         '''
         Implementation of Fast Gradient Sign Method 
         x_adv: input image data
@@ -52,7 +52,7 @@ class AdvSolver(object):
         x_adv_grad = x_adv.grad.data
         
         # FGSM step: only one gradient ascent step
-        x_adv = x_adv + self.eps * x_adv_grad.sign()
+        x_adv = x_adv - self.eps * x_adv_grad.sign()
         x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
 
         
@@ -61,7 +61,7 @@ class AdvSolver(object):
 
         return x_adv, y_adv_pred
         
-    def i_fgsm(self, x_adv, y, device, target=True, alpha=1., iteration=1, x_val_min = -1., x_val_max = 1.):
+    def i_fgsm(self, x_adv, y, device, target=False, alpha=1., iteration=1, x_val_min = -1., x_val_max = 1.):
         x = x_adv.clone()
         x_adv.requires_grad = True
         for i in range(iteration):
@@ -69,7 +69,7 @@ class AdvSolver(object):
             if target:
                 loss = self.criterion(y_adv, y)
             else:
-                loss = -self.criterion(y_adv, y)
+                loss = - self.criterion(y_adv, y)
 
             self.net.zero_grad()
             if x_adv.grad is not None:
@@ -82,7 +82,7 @@ class AdvSolver(object):
             # Collect datagrad
             x_adv_grad = x_adv.grad.data
             
-            x_adv = x_adv + alpha * x_adv_grad.sign()
+            x_adv = x_adv - alpha * x_adv_grad.sign()
             x_adv = where(x_adv > x+self.eps, x+self.eps, x_adv)
             x_adv = where(x_adv < x-self.eps, x-self.eps, x_adv)
             x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
@@ -106,7 +106,7 @@ class GenAdv(object):
         # define criterion function, e.g. cross_entropy
         self.criterion = criterion
         
-    def generate_adv(self, data, y, target=True, eps=0.01):
+    def generate_adv(self, data, y, target=False, eps=0.01):
         '''
         eps: the learning rate to generate adversary example
         data: the inpout initial data
@@ -115,7 +115,7 @@ class GenAdv(object):
         if self.method == 'fgsm':
             x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
         elif self.method == 'i_fgsm':
-            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).fgsm(data, y, target=target, self.device)
+            x_adv, y_adv = AdvSolver(self.net, eps, self.criterion).i_fgsm(data, y, target=target, self.device)
             
         return x_adv, y_adv
             
@@ -123,7 +123,7 @@ class GenAdv(object):
 ### Debugging
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net = VGG('VGG11').to(device)
+    net = resnet34(pretrained=True).to(device)
     x = torch.randn(2,3,32,32).to(device)
     y = net(x).to(device)
     print(y.size())
