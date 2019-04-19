@@ -103,7 +103,7 @@ class AdvSolver(object):
 
 
 class GenAdv(object):
-    def __init__(self, net, device, criterion, eps=0.03, adv_iter=100, method='i_fgsm'):
+    def __init__(self, net, device, criterion, eps=0.05, adv_iter=100, method='i_fgsm'):
         self.net = net
         self.net.eval()
         self.device = device
@@ -129,9 +129,9 @@ class GenAdv(object):
         else:
             return x_adv, y_adv
 
-    def aggregate_adv_noise(self, x, adv_noise, method='uniform'):
-        if method == 'uniform':
-            x_adv_aggregate = x + torch.mean(adv_noise, dim=0)
+    def aggregate_adv_noise(self, x, adv_noise, method='average'):
+        if method == 'average':
+            x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
             x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
             x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
 
@@ -178,17 +178,22 @@ if __name__ == "__main__":
     mobilenet.load_state_dict(mobile_checkpoint['net'])
 
     nets = [densenet, resnet, mobilenet]
-    adv_noise = torch.tensor([], device=device)
+    adv_noise = []
     for i in range(len(nets)):
         net = nets[i]
         criterion = F.cross_entropy
         Generate_Adv = GenAdv(net, device, criterion)
-        x_adv, y_adv = Generate_Adv.generate_adv(x, y)
+        x_adv, _ = Generate_Adv.generate_adv(x, y)
 
-        print('=== Prediction results for adversarial examples of net %d' % i)
-        print(y_adv.squeeze())
-        adv_noise = torch.cat([adv_noise, x_adv - x])
+        for j in range(len(nets)):
+            net = nets[j]
+            y_adv = net(x_adv)
+            print('=== Prediction results for adversarial examples of net %d' % j)
+            print(y_adv.max(1, keepdim=True)[1].squeeze())
 
+        adv_noise.append(x_adv - x)
+
+    adv_noise = torch.stack(adv_noise)
     print(adv_noise.size())
     x_adv_aggregate = Generate_Adv.aggregate_adv_noise(x, adv_noise)
     for i in range(len(nets)):
@@ -202,6 +207,8 @@ if __name__ == "__main__":
 
     for i in range(len(y)):
         recreated_image = recreate_image(x_adv_aggregate[i])
-        noise_image = recreated_image - recreate_image(x[i])
+        original_image = recreate_image(x[i])
+        noise_image = recreated_image - original_image
+        cv2.imwrite('../generated_images/original_image_' + str(i) + '.jpg', original_image)
         cv2.imwrite('../generated_images/noise_image_' + str(i) + '.jpg', noise_image)
         cv2.imwrite('../generated_images/recreated_image_' + str(i) + '.jpg', recreated_image)
