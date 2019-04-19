@@ -141,6 +141,8 @@ class GenAdv(object):
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    print(device)
+
     # Preparing data, decompose the features and labels.
     transform_test = transforms.Compose([
         transforms.ToTensor(),
@@ -155,17 +157,17 @@ if __name__ == "__main__":
         break
 
     print(y)
-    dir_name = 'model/cifar/pretrained/checkpoint'
-
-    # Load DenseNet
-    densenet = DenseNet121().to(device)
-    dense_checkpoint = torch.load(dir_name + '/DenseNet.t7')
-    densenet.load_state_dict(dense_checkpoint['net'])
+    dir_name = '../model/cifar/pretrained/checkpoint'
 
     # Load ResNet
     resnet = ResNet18().to(device)
     res_checkpoint = torch.load(dir_name + '/ResNet.t7')
     resnet.load_state_dict(res_checkpoint['net'])
+
+    # Load DenseNet
+    densenet = DenseNet121().to(device)
+    dense_checkpoint = torch.load(dir_name + '/DenseNet.t7')
+    densenet.load_state_dict(dense_checkpoint['net'])
 
     # Load MobileNet
     mobilenet = MobileNet().to(device)
