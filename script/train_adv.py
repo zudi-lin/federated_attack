@@ -139,8 +139,7 @@ class GenAdv(object):
 
 # main code
 if __name__ == "__main__":
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
 
     # Preparing data, decompose the features and labels.
@@ -156,21 +155,24 @@ if __name__ == "__main__":
         x, y = x.to(device), y.to(device)
         break
 
-    print(y)
+    print(str(y)+'\n')
     dir_name = '../model/cifar/pretrained/checkpoint'
 
     # Load ResNet
     resnet = ResNet18().to(device)
+    resnet = torch.nn.DataParallel(resnet)
     res_checkpoint = torch.load(dir_name + '/ResNet.t7')
     resnet.load_state_dict(res_checkpoint['net'])
 
     # Load DenseNet
     densenet = DenseNet121().to(device)
+    densenet = torch.nn.DataParallel(densenet)
     dense_checkpoint = torch.load(dir_name + '/DenseNet.t7')
     densenet.load_state_dict(dense_checkpoint['net'])
 
     # Load MobileNet
     mobilenet = MobileNet().to(device)
+    mobilenet = torch.nn.DataParallel(mobilenet)
     mobile_checkpoint = torch.load(dir_name + '/MobileNet.t7')
     mobilenet.load_state_dict(mobile_checkpoint['net'])
 
@@ -182,18 +184,16 @@ if __name__ == "__main__":
         Generate_Adv = GenAdv(net, device, criterion)
         x_adv, y_adv = Generate_Adv.generate_adv(x, y)
 
-        print('=== Prediction results for adversarial examples')
-        print(y_adv)
+        print('=== Prediction results for adversarial examples of net %d' % i)
+        print(y_adv.squeeze())
         adv_noise = torch.cat([adv_noise, x_adv - x])
 
     x_adv_aggregate = Generate_Adv.aggregate_adv_noise(x, adv_noise)
-    recreated_image = recreate_image(x_adv_aggregate)
-
-    noise_image = recreated_image - x
-
     if not os.path.exists('../generated_images'):
-            os.makedirs('../generated_images')
+        os.makedirs('../generated_images')
 
-    for i in range(len(recreated_image)):
-        cv2.imwrite('../generated_images/noise_image_' + str(i) + '.jpg', noise_image[i])
-        cv2.imwrite('../generated_images/recreated_image_' + str(i) + '.jpg', recreated_image[i])
+    for i in range(len(y)):
+        recreated_image = recreate_image(x_adv_aggregate[i])
+        noise_image = recreated_image - recreate_image(x[i])
+        cv2.imwrite('../generated_images/noise_image_' + str(i) + '.jpg', noise_image)
+        cv2.imwrite('../generated_images/recreated_image_' + str(i) + '.jpg', recreated_image)

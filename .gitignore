@@ -123,3 +123,4 @@ outputs/
 .DS_Store
 *.pth
 *.sh
+generated_images/
