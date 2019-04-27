@@ -1,0 +1,1 @@
+from .federated_cifar10 import FedratedCIFAR10
