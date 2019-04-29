@@ -1,1 +1,1 @@
-from .federated_cifar10 import FedratedCIFAR10
+from .federated_cifar10 import FederatedCIFAR10

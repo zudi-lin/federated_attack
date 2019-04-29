@@ -95,6 +95,7 @@ class FederatedCIFAR10(VisionDataset):
         self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
         print('Data shape: ', self.data.shape)
+        print('Label shape: ', np.array(self.targets).shape)
 
         self._load_meta()
 
@@ -105,15 +106,15 @@ class FederatedCIFAR10(VisionDataset):
 
     def _prepare_fedrated(self):
         if self.sample_type == 'random':
-            index_list = np.random.choice(len(self.data), int(len(self.data) // 2), replace=False)
+            index_list = np.random.choice(len(self.data), int(len(self.data) // 5), replace=False)
             self.fedrated_data = self.data[index_list]
-            self.fedrated_targets = self.targets[index_list]
+            self.fedrated_targets = np.array(self.targets)[index_list]
         else:
             class_list = [np.where(self.targets==x) for x in range(10)]
             index_list = np.random.choice(10, 2, replace=False)
             self.fedrated_data = self.data[class_list[index_list[0]]+class_list[index_list[1]]]
             self.fedrated_targets = self.targets[class_list[index_list[0]]+class_list[index_list[1]]]
-        print('Number of samples: ', len(self.fedrated_data))
+        print('Number of samples in this local device: ', len(self.fedrated_data))
 
     def _load_meta(self):
         path = os.path.join(self.root, self.base_folder, self.meta['filename'])
