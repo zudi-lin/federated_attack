@@ -110,11 +110,15 @@ class FederatedCIFAR10(VisionDataset):
             self.fedrated_data = self.data[index_list]
             self.fedrated_targets = np.array(self.targets)[index_list]
         else:
+            self.targets = np.array(self.targets)
             class_list = [np.where(self.targets==x) for x in range(10)]
             index_list = np.random.choice(10, 2, replace=False)
-            self.fedrated_data = self.data[class_list[index_list[0]]+class_list[index_list[1]]]
-            self.fedrated_targets = self.targets[class_list[index_list[0]]+class_list[index_list[1]]]
+            self.fedrated_data = np.concatenate((self.data[class_list[index_list[0]]],
+                                                 self.data[class_list[index_list[1]]]), axis=0)
+            self.fedrated_targets = np.concatenate((self.targets[class_list[index_list[0]]],
+                                                    self.targets[class_list[index_list[1]]]), axis=0)
         print('Number of samples in this local device: ', len(self.fedrated_data))
+        assert len(self.fedrated_data) == len(self.fedrated_targets)
 
     def _load_meta(self):
         path = os.path.join(self.root, self.base_folder, self.meta['filename'])

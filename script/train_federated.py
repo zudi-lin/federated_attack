@@ -20,12 +20,18 @@ from model.cifar import *
 from datasets import FederatedCIFAR10
 from utils import progress_bar
 
+MODEL_MAP = {'resnet18': ResNet18(),
+             'vgg19': VGG('VGG19'),
+             'densenet121': DenseNet121(),
+             'googlenet': GoogLeNet(),
+             'shufflenet': ShuffleNetV2(1)}
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--client', type=int, help='index of local client')
 parser.add_argument('--sample', type=str, help='data sampling approach')
+parser.add_argument('--model', type=str, help='model architecture')
 args = parser.parse_args()
 
 device = ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -60,8 +66,10 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 
 # Model
 print('==> Building model..')
+assert args.model in MODEL_MAP.keys()
+net = MODEL_MAP[args.model]
 # net = VGG('VGG19')
-net = ResNet18()
+# net = ResNet18()
 # net = PreActResNet18()
 # net = GoogLeNet()
 # net = DenseNet121()
@@ -136,3 +144,36 @@ def train(epoch):
 for epoch in range(start_epoch, start_epoch+150):
     scheduler.step()
     train(epoch)
+
+# sbatch train_federated.sh 10 class resnet18
+# sbatch train_federated.sh 11 class resnet18
+# sbatch train_federated.sh 12 class resnet18
+# sbatch train_federated.sh 13 class resnet18
+# sbatch train_federated.sh 14 class resnet18
+# sbatch train_federated.sh 15 class resnet18
+# sbatch train_federated.sh 16 class resnet18
+# sbatch train_federated.sh 17 class resnet18
+# sbatch train_federated.sh 18 class resnet18
+# sbatch train_federated.sh 19 class resnet18
+
+# sbatch train_federated.sh 20 random resnet18
+# sbatch train_federated.sh 21 random resnet18
+# sbatch train_federated.sh 22 random vgg19
+# sbatch train_federated.sh 23 random vgg19
+# sbatch train_federated.sh 24 random densenet121
+# sbatch train_federated.sh 25 random densenet121
+# sbatch train_federated.sh 26 random googlenet
+# sbatch train_federated.sh 27 random googlenet
+# sbatch train_federated.sh 28 random shufflenet
+# sbatch train_federated.sh 29 random shufflenet
+
+# sbatch train_federated.sh 30 class resnet18
+# sbatch train_federated.sh 31 class resnet18
+# sbatch train_federated.sh 32 class vgg19
+# sbatch train_federated.sh 33 class vgg19
+# sbatch train_federated.sh 34 class densenet121
+# sbatch train_federated.sh 35 class densenet121
+# sbatch train_federated.sh 36 class googlenet
+# sbatch train_federated.sh 37 class googlenet
+# sbatch train_federated.sh 38 class shufflenet
+# sbatch train_federated.sh 39 class shufflenet
