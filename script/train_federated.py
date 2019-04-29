@@ -145,6 +145,17 @@ for epoch in range(start_epoch, start_epoch+150):
     scheduler.step()
     train(epoch)
 
+# sbatch train_federated.sh 0 random resnet18
+# sbatch train_federated.sh 1 random resnet18
+# sbatch train_federated.sh 2 random resnet18
+# sbatch train_federated.sh 3 random resnet18
+# sbatch train_federated.sh 4 random resnet18
+# sbatch train_federated.sh 5 random resnet18
+# sbatch train_federated.sh 6 random resnet18
+# sbatch train_federated.sh 7 random resnet18
+# sbatch train_federated.sh 8 random resnet18
+# sbatch train_federated.sh 9 random resnet18
+
 # sbatch train_federated.sh 10 class resnet18
 # sbatch train_federated.sh 11 class resnet18
 # sbatch train_federated.sh 12 class resnet18
