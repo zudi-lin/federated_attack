@@ -102,6 +102,15 @@ class AdvSolver(object):
         return x_adv, y_adv_pred
 
 
+def aggregate_adv_noise(x, adv_noise, method='majority_voting'):
+    if method == 'majority_voting':
+        x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
+        x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
+        x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+
+    return x_adv_aggregate
+
+
 class GenAdv(object):
     def __init__(self, net, device, criterion, eps=0.05, adv_iter=100, method='i_fgsm'):
         self.net = net
@@ -128,14 +137,6 @@ class GenAdv(object):
             return x_adv, y_adv, y
         else:
             return x_adv, y_adv
-
-    def aggregate_adv_noise(self, x, adv_noise, method='average'):
-        if method == 'average':
-            x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
-            x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
-            x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
-
-        return x_adv_aggregate
 
 
 # main code

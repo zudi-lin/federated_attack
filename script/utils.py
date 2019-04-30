@@ -126,7 +126,38 @@ def format_time(seconds):
     if f == '':
         f = '0ms'
     return f
-    
+
+def preprocess_image(cv2im, resize_im=True):
+    """
+        Processes image for CNNs
+    Args:
+        PIL_img (PIL_img): Image to process
+        resize_im (bool): Resize to 224 or not
+    returns:
+        im_as_var (Pytorch variable): Variable that contains processed float tensor
+    """
+    # mean and std list for channels (Imagenet)
+    mean = [0.4914, 0.4822, 0.4465]
+    std = [0.2023, 0.1994, 0.2010]
+    # Resize image
+    if resize_im:
+        cv2im = cv2.resize(cv2im, (224, 224))
+    im_as_arr = np.float32(cv2im)
+    im_as_arr = np.ascontiguousarray(im_as_arr[..., ::-1])
+    im_as_arr = im_as_arr.transpose(2, 0, 1)  # Convert array to D,W,H
+    # Normalize the channels
+    for channel, _ in enumerate(im_as_arr):
+        im_as_arr[channel] /= 255
+        im_as_arr[channel] -= mean[channel]
+        im_as_arr[channel] /= std[channel]
+    # Convert to float tensor
+    im_as_ten = torch.from_numpy(im_as_arr).float()
+    # Add one more channel to the beginning. Tensor shape = 1,3,224,224
+    im_as_ten.unsqueeze_(0)
+    # Convert to Pytorch variable
+    im_as_var = Variable(im_as_ten, requires_grad=True)
+    return im_as_var
+
 def recreate_image(im_as_var):
     """
         Recreates images from a torch variable, sort of reverse preprocessing
