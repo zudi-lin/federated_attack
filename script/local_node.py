@@ -125,6 +125,8 @@ while (True):
         time.sleep(5) # Simulate the situation where each adv image requires 5 seconds to create
 
 
+        local_original_image = cv2.imread(NODE_LOCAL_ORIGINAL_IMAGES_PATH+image_name, 1)
+
         # Save adv image to local storage first
         adv_image_file = open(NODE_LOCAL_PATH+adv_image_name, "wb")
         adv_image_file.write(adv_image_data)
