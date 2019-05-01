@@ -117,7 +117,10 @@ class FederatedCIFAR10(VisionDataset):
                                                  self.data[class_list[index_list[1]]]), axis=0)
             self.fedrated_targets = np.concatenate((self.targets[class_list[index_list[0]]],
                                                     self.targets[class_list[index_list[1]]]), axis=0)
-        print('Number of samples in this local device: ', len(self.fedrated_data))
+        if self.train:
+            print('Number of traning samples: ', len(self.fedrated_data))
+        else:
+            print('Number of samples: ', len(self.fedrated_data))
         assert len(self.fedrated_data) == len(self.fedrated_targets)
 
     def _load_meta(self):
@@ -182,3 +185,9 @@ class FederatedCIFAR10(VisionDataset):
 
     def extra_repr(self):
         return "Split: {}".format("Train" if self.train is True else "Test")
+
+    def export_data(self):
+        output = {}
+        output['image'] = self.fedrated_data
+        output['label'] = self.fedrated_targets
+        return output
