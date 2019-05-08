@@ -197,7 +197,7 @@ while (True):
 
             # Save adv image to local storage first
             cv2.imwrite(SERVER_LOCAL_AGGREGATED_IMAGES_PATH + agg_image_name,\
-                    recreated_global_aggregated_image)
+                recreated_global_aggregated_image)
             print("Aggregated image " + agg_image_name + " created!")
 
 

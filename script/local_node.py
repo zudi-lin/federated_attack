@@ -105,7 +105,7 @@ while (True):
 
     # Read each orginal image. The name is in the form of "image2.jpg"
     for image_name in original_image_name_list:
-        image_file = open(NODE_LOCAL_ORIGINAL_IMAGES_PATH+image_name, 'rb')
+        # image_file = open(NODE_LOCAL_ORIGINAL_IMAGES_PATH+image_name, 'rb')
         print("To attack "+image_name+":")
 
         # Generate adv image name
@@ -120,17 +120,31 @@ while (True):
 
         # Generate adversarial image
         # pass
-        adv_image_data = image_file.read()  #blank attack
-        image_file.close()
+
+
+        # adv_image_data = image_file.read()  #blank attack
+        # image_file.close()
+
+        local_original_image = cv2.imread(NODE_LOCAL_ORIGINAL_IMAGES_PATH+image_name, 1)
+        preprocess_original_image = preprocess_image(local_original_image)
         time.sleep(5) # Simulate the situation where each adv image requires 5 seconds to create
 
 
-        local_original_image = cv2.imread(NODE_LOCAL_ORIGINAL_IMAGES_PATH+image_name, 1)
+        # To do: decompose features x and label y
+        # x, y =
+
+        # To do: import net and device
+        # net, device =
+
+        Generate_Adv = GenAdv(net, device, criterion)
+        local_adv_image, local_adv_label = Generate_Adv.generate_adv(x, y)
+
+        recreated_local_adv_image = recreate_image(local_adv_image)
 
         # Save adv image to local storage first
-        adv_image_file = open(NODE_LOCAL_PATH+adv_image_name, "wb")
-        adv_image_file.write(adv_image_data)
-        adv_image_file.close()
+        cv2.imwrite(NODE_LOCAL_PATH+adv_image_name, recreated_local_adv_image)
+        # adv_image_file.write(adv_image_data)
+        # adv_image_file.close()
 
         # Upload new version of adv image to cloud (can handle the first upload)
         upload_file(client, NODE_LOCAL_PATH + adv_image_name, BUCKET, REMOTE_ADV_IMAGE_FOLDER, adv_image_name)
