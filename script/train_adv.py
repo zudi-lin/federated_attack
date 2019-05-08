@@ -42,7 +42,11 @@ def compute_AAR(x, y, x_adv, nets, target=False):
         y_adv = net(x_adv)
         y_adv_pred = y_adv.max(1, keepdim=True)[1].squeeze()
         if target:
-            aar +=
+            aar += torch.mean(torch.tensor(y == y_adv_pred, dtype=torch.float32))
+        else:
+            aar += torch.mean(torch.tensor(y != y_adv_pred, dtype=torch.float32))
+
+    return aar/len(nets)
 
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
