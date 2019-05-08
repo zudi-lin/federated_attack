@@ -9,6 +9,9 @@ import string
 import logging
 import boto3
 import cv2
+import torch
+import torch.nn.functional as F
+
 from utils import preprocess_image, recreate_image
 from train_adv import *
 from botocore.exceptions import ClientError
@@ -136,7 +139,7 @@ while (True):
         # To do: import net and device
         # net, device =
 
-        Generate_Adv = GenAdv(net, device, criterion)
+        Generate_Adv = GenAdv(net, device, F.cross_entropy)
         local_adv_image, local_adv_label = Generate_Adv.generate_adv(x, y)
 
         recreated_local_adv_image = recreate_image(local_adv_image)

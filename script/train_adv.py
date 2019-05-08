@@ -24,11 +24,15 @@ from utils import recreate_image
 from model.cifar import *
 
 
-def aggregate_adv_noise(x, adv_noise, method='majority_voting'):
+def aggregate_adv_noise(x, adv_noise, eps=0.05, method='majority_voting'):
     if method == 'majority_voting':
-        x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
-        x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
-        x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+        x_adv_aggregate = x + eps * torch.mean(adv_noise, dim=0).sign()
+        x_adv_aggregate = torch.where(x_adv_aggregate > x+eps, x+eps, x_adv_aggregate)
+        x_adv_aggregate = torch.where(x_adv_aggregate < x-eps, x-eps, x_adv_aggregate)
+    elif method == 'mean_aggregation':
+        x_adv_aggregate = x + torch.mean(adv_noise, dim=0)
+        x_adv_aggregate = torch.where(x_adv_aggregate > x+eps, x+eps, x_adv_aggregate)
+        x_adv_aggregate = torch.where(x_adv_aggregate < x-eps, x-eps, x_adv_aggregate)
 
     return x_adv_aggregate
 
@@ -158,7 +162,7 @@ class GenAdv(object):
 # main code
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(device)
+    # print(device)
 
     # Preparing data, decompose the features and labels.
     transform_test = transforms.Compose([
@@ -194,6 +198,7 @@ if __name__ == "__main__":
     mobile_checkpoint = torch.load(dir_name + '/MobileNet.t7')
     mobilenet.load_state_dict(mobile_checkpoint['net'])
 
+    # To do: load more models
     nets = [densenet, resnet, mobilenet]
     adv_noise = []
     for i in range(len(nets)):
@@ -202,22 +207,31 @@ if __name__ == "__main__":
         Generate_Adv = GenAdv(net, device, criterion)
         x_adv, _ = Generate_Adv.generate_adv(x, y)
 
-        for j in range(len(nets)):
-            net = nets[j]
-            y_adv = net(x_adv)
-            print('=== Prediction results for adversarial examples of net %d' % j)
-            print(y_adv.max(1, keepdim=True)[1].squeeze())
+        print('=== Prediction results for adversarial examples of net %d' % i)
+        aar = compute_AAR(x, y, x_adv, nets, target=False)
+        print(aar)
+
+        # for j in range(len(nets)):
+        #     net = nets[j]
+        #     y_adv = net(x_adv)
+        #     print('=== Prediction results for adversarial examples of net %d' % j)
+        #     print(y_adv.max(1, keepdim=True)[1].squeeze())
 
         adv_noise.append(x_adv - x)
 
     adv_noise = torch.stack(adv_noise)
     print(adv_noise.size())
-    x_adv_aggregate = Generate_Adv.aggregate_adv_noise(x, adv_noise)
-    for i in range(len(nets)):
-        net = nets[i]
-        y_adv_agg = net(x_adv_aggregate)
-        y_adv_agg_pred = y_adv_agg.max(1, keepdim=True)[1].squeeze()
-        print(y_adv_agg_pred)
+    x_adv_aggregate = aggregate_adv_noise(x, adv_noise)
+
+    print('=== Prediction results for aggregated adversarial examples')
+    aar_aggregate = compute_AAR(x, y, x_adv_aggregate, nets, target=False)
+    print(aar_aggregate)
+
+    # for i in range(len(nets)):
+    #     net = nets[i]
+    #     y_adv_agg = net(x_adv_aggregate)
+    #     y_adv_agg_pred = y_adv_agg.max(1, keepdim=True)[1].squeeze()
+    #     print(y_adv_agg_pred)
 
     if not os.path.exists('../generated_images'):
         os.makedirs('../generated_images')
