@@ -23,6 +23,27 @@ from utils import recreate_image
 
 from model.cifar import *
 
+
+def aggregate_adv_noise(x, adv_noise, method='majority_voting'):
+    if method == 'majority_voting':
+        x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
+        x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
+        x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
+
+    return x_adv_aggregate
+
+def compute_AAR(x, y, x_adv, nets, target=False):
+    '''
+    compute average attack rate
+    '''
+    aar = 0.
+    for i in range(len(nets)):
+        net = nets[i]
+        y_adv = net(x_adv)
+        y_adv_pred = y_adv.max(1, keepdim=True)[1].squeeze()
+        if target:
+            aar +=
+
 class AdvSolver(object):
     def __init__ (self, net, eps, criterion):
         self.net = net
@@ -100,15 +121,6 @@ class AdvSolver(object):
         y_adv_pred = y_adv.max(1, keepdim=True)[1] # get the index of the max log-probability
 
         return x_adv, y_adv_pred
-
-
-def aggregate_adv_noise(x, adv_noise, method='majority_voting'):
-    if method == 'majority_voting':
-        x_adv_aggregate = x + self.eps * torch.mean(adv_noise, dim=0).sign()
-        x_adv_aggregate = torch.where(x_adv_aggregate > x+self.eps, x+self.eps, x_adv_aggregate)
-        x_adv_aggregate = torch.where(x_adv_aggregate < x-self.eps, x-self.eps, x_adv_aggregate)
-
-    return x_adv_aggregate
 
 
 class GenAdv(object):
