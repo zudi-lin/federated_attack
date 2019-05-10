@@ -1,4 +1,4 @@
-# Adver-Vis: Visualization of Adversarial Attacks
+# Federated Adversarial Attacks in ConvNets
 
 ## Introduction
 
