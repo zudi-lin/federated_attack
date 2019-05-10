@@ -63,5 +63,14 @@ def delete_file(client, bucket_name, remote_folder_name, remote_file_name):
     full_remote_file_name = remote_folder_name + remote_file_name
     return client.delete_object(Bucket=bucket_name, Key=full_remote_file_name)
 
+def check_prefix(client, bucket_name, prefix):
+    rtn = client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    if rtn['KeyCount']<=0: return []
+    else: 
+        rtn = rtn['Contents']
+        rst = []
+        for entry in rtn: rst.append(entry['Key'])
+        return rst
+
 def time_tag(time):
     return int((time - int(time) + int(time) % 1000000 ) * 1000)
