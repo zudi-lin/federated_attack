@@ -124,7 +124,8 @@ outputs/
 *.pth
 *.sh
 generated_images/
-global_storage/aggregated_images/
-global_storage/images_from_nodes/
-global_storage/register/
+global_storage/
+#global_storage/aggregated_images/
+#global_storage/images_from_nodes/
+#global_storage/register/
 node_storage/
