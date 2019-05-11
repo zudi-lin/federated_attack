@@ -134,7 +134,7 @@ while (True):
 
 
         # To do: decompose features x and label y
-        # x, y =
+        # x, y = preprocess_original_image.unsqueeze(0),
 
         # To do: import net and device
         # net, device =

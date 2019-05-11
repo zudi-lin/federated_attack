@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
         print('=== Prediction results for adversarial examples of net %d' % i)
         aar = compute_AAR(x, y, x_adv, nets, target=False)
-        print(aar)
+        print(aar.item())
 
         # for j in range(len(nets)):
         #     net = nets[j]
@@ -225,7 +225,7 @@ if __name__ == "__main__":
 
     print('=== Prediction results for aggregated adversarial examples')
     aar_aggregate = compute_AAR(x, y, x_adv_aggregate, nets, target=False)
-    print(aar_aggregate)
+    print(aar_aggregate.item())
 
     # for i in range(len(nets)):
     #     net = nets[i]
