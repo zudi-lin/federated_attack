@@ -7,13 +7,21 @@
 from system_utils import *
 import time
 import random
-import os
+import os, sys
+sys.path.append(os.path.abspath('../'))
+
 import numpy as np
 import string
 import logging
 import h5py
 import boto3
 from botocore.exceptions import ClientError
+import torch
+import torch.nn.functional as F
+from model.cifar import *
+
+from utils import preprocess_image, recreate_image
+from train_adv import *
 
 ACCESS_KEY = "AKIAYSSR3P6HBYS35VUA"
 SECRET_KEY = "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"
@@ -37,7 +45,7 @@ def download_and_pick_a_dateset():
     for dataset_name in dataset_name_list:
         if (".h5" in dataset_name) and not (dataset_name in dataset_process_times):
             dataset_name = dataset_name[mask_len:]
-            rtn = download_file(client, BUCKET, REMOTE_ORIGINAL_IMAGE_FOLDER, dataset_name, 
+            rtn = download_file(client, BUCKET, REMOTE_ORIGINAL_IMAGE_FOLDER, dataset_name,
                                 NODE_LOCAL_ORIGINAL_IMAGES_PATH + dataset_name)
             dataset_process_times[dataset_name] = 0
             print("Original image dataset %s downloaded!" % dataset_name)
@@ -56,7 +64,7 @@ def download_and_pick_a_dateset():
 REGISTER_WAIT_RESPONSE_SECOND = 3
 ATTACK_MAXIMUM_ROUNDS = 10
 
-IDENTITY = 'aa'+''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) 
+IDENTITY = 'aa'+''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits)
                         for _ in range(6)) # Create node identity
 print("Indentity created: "+IDENTITY)
 
@@ -76,11 +84,11 @@ BATCH_SIZE = 16
 
 
 ### Intialize local storage
-if not os.path.exists(NODE_LOCAL_GENERIC_PATH): 
+if not os.path.exists(NODE_LOCAL_GENERIC_PATH):
     os.mkdir(NODE_LOCAL_GENERIC_PATH)
-if not os.path.exists(NODE_LOCAL_PATH): 
+if not os.path.exists(NODE_LOCAL_PATH):
     os.mkdir(NODE_LOCAL_PATH)
-if not os.path.exists(NODE_LOCAL_ORIGINAL_IMAGES_PATH): 
+if not os.path.exists(NODE_LOCAL_ORIGINAL_IMAGES_PATH):
     os.mkdir(NODE_LOCAL_ORIGINAL_IMAGES_PATH)
 print("Local storage initialized!")
 
@@ -97,7 +105,7 @@ while not registered:
     if not rtn:
         rtn = upload_file(client, message_file, BUCKET, REMOTE_REGISTER_FOLDER, IDENTITY)
         print("Register message sent!")
-    
+
     # Wait until receive adv_num
     while (True):
         if rtn:
@@ -112,8 +120,8 @@ while not registered:
             message.close()
         time.sleep(REGISTER_WAIT_RESPONSE_SECOND)
         rtn = download_file(client, BUCKET, REMOTE_REGISTER_FOLDER, IDENTITY, message_file)
-    
-    
+
+
 
 ### Start attack process
 system_start_time = time.time()
@@ -132,7 +140,7 @@ while not timeout:
     fl.close()
     total_image_num = len(labels)
     print(f"Dataset {curr_dataset} loaded!")
-    
+
     # Read each orginal image. The name is in the form of "image2.jpg"
     processed_image_num = 0
     while processed_image_num < total_image_num:
@@ -149,20 +157,32 @@ while not timeout:
         # the input batch of images = image_list
         # the labels of the input batch images = label_list
         # the identifiers of the input batch images = identifier_list
-        
+
         # please store the generated batch of adv images ==> adv_image_list, AS A NUMPY ARRAY!!!
         # please store the original labels of the batch ==> adv_label_list
         # please store the corresponding identifiers of the batch ==> adv_identifier_list
-        # if you do not change the order the images, then 
-        # it should be "adv_identifier_list == identifier_list" and "adv_label_list==label_list" 
-        
-        # Example:
-        adv_image_list = np.array(image_list) # blank attack
-        adv_label_list = np.array(label_list) # This should not be changed if the order of images is not changed
+        # if you do not change the order the images, then
+        # it should be "adv_identifier_list == identifier_list" and "adv_label_list==label_list"
+
+        # Prepare data to input in the neural network:
+        x = torch.stack([preprocess_image(np.array(image)) for image in image_list])
+        y = torch.from_numpy(np.array(label_list)).long()
+
+        # Define the model and device of local machine, the following is a toy example
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        net = ResNet18().to(device)
+
+        Generate_Adv = GenAdv(net, device, F.cross_entropy)
+        adv_image_list, adv_label_list = Generate_Adv.generate_adv(x, y)
+
+        # Recreate images from transformed images.
+        adv_image_list = np.stack([recreate_image(adv_image) for adv_image in adv_image_list])
+        adv_label_list = np.array(adv_label_list.numpy(), dtype=int)
+
         adv_identifier_list = np.array(identifier_list)
         time.sleep(3) # Simulate the situation where each adv image requires 5 seconds to create
-        
-        # Save adv image to local storage first 
+
+        # Save adv image to local storage first
         #adv_file_name = "adv0_tm425635841.h5"
         adv_file_name = f"adv{str(adv_num)}_tm{str(time_tag(time.time()))}.h5"
         fl=h5py.File(NODE_LOCAL_PATH + adv_file_name, 'w')
@@ -170,27 +190,26 @@ while not timeout:
         fl.create_dataset('label', data=adv_label_list)
         fl.create_dataset('identifier', data=adv_identifier_list)
         fl.close()
-        
-        
+
+
         # Upload new version of adv image to cloud (can handle the first upload)
         upload_file(client, NODE_LOCAL_PATH + adv_file_name, BUCKET, REMOTE_ADV_IMAGE_FOLDER, adv_file_name)
         print("Uploaded "+ adv_file_name+"!")
-        
+
         # The end of generating adversial images
         ######################################################################
-        
+
         round_cnt +=1
-        
+
         # terminate the system based on the round counter
-        if round_cnt>=ATTACK_MAXIMUM_ROUNDS: 
+        if round_cnt>=ATTACK_MAXIMUM_ROUNDS:
             timeout = True
             break
-            
+
         time.sleep(1) # Do NOT change this, otherwise AWS budget will be exhausted rapidly!!!
-    
+
         # if the system runs too long, close it automatically.
         system_curr_time = time.time()
         if system_curr_time - system_start_time >= 60:
             timeout = True
             break
-

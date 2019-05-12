@@ -10,6 +10,8 @@ import math
 import copy
 import numpy as np
 
+import torch
+from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.init as init
 
@@ -127,7 +129,7 @@ def format_time(seconds):
         f = '0ms'
     return f
 
-def preprocess_image(cv2im, resize_im=True):
+def preprocess_image(im_as_arr):
     """
         Processes image for CNNs
     Args:
@@ -139,10 +141,8 @@ def preprocess_image(cv2im, resize_im=True):
     # mean and std list for channels (Imagenet)
     mean = [0.4914, 0.4822, 0.4465]
     std = [0.2023, 0.1994, 0.2010]
-    # Resize image
-    if resize_im:
-        cv2im = cv2.resize(cv2im, (224, 224))
-    im_as_arr = np.float32(cv2im)
+
+    im_as_arr = np.float32(im_as_arr)
     im_as_arr = np.ascontiguousarray(im_as_arr[..., ::-1])
     im_as_arr = im_as_arr.transpose(2, 0, 1)  # Convert array to D,W,H
     # Normalize the channels
@@ -153,7 +153,7 @@ def preprocess_image(cv2im, resize_im=True):
     # Convert to float tensor
     im_as_ten = torch.from_numpy(im_as_arr).float()
     # Add one more channel to the beginning. Tensor shape = 1,3,224,224
-    im_as_ten.unsqueeze_(0)
+    # im_as_ten.unsqueeze_(0)
     # Convert to Pytorch variable
     im_as_var = Variable(im_as_ten, requires_grad=True)
     return im_as_var
