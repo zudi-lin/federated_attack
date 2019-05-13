@@ -60,9 +60,10 @@ def download_and_pick_a_dateset():
 
 
 ### Initialize constants
+ATTACK_MAXIMUM_ROUNDS = 10000
 
-REGISTER_WAIT_RESPONSE_SECOND = 3
-ATTACK_MAXIMUM_ROUNDS = 10
+REGISTER_WAIT_RESPONSE_SECOND = 1
+ROUND_WAIT_DURATION = 1
 
 IDENTITY = 'aa'+''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits)
                         for _ in range(6)) # Create node identity
@@ -92,7 +93,9 @@ if not os.path.exists(NODE_LOCAL_ORIGINAL_IMAGES_PATH):
     os.mkdir(NODE_LOCAL_ORIGINAL_IMAGES_PATH)
 print("Local storage initialized!")
 
-
+### Intialize the model
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+net = ResNet18().to(device)
 
 ### Register to the global server and download original images
 registered = False
@@ -169,18 +172,13 @@ while not timeout:
         y = torch.from_numpy(np.array(label_list)).long()
 
         # Define the model and device of local machine, the following is a toy example
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        net = ResNet18().to(device)
-
         Generate_Adv = GenAdv(net, device, F.cross_entropy)
         adv_image_list, adv_label_list = Generate_Adv.generate_adv(x, y)
 
         # Recreate images from transformed images.
         adv_image_list = np.stack([recreate_image(adv_image) for adv_image in adv_image_list])
         adv_label_list = np.array(adv_label_list.numpy(), dtype=int)
-
         adv_identifier_list = np.array(identifier_list)
-        time.sleep(3) # Simulate the situation where each adv image requires 5 seconds to create
 
         # Save adv image to local storage first
         #adv_file_name = "adv0_tm425635841.h5"
@@ -206,10 +204,16 @@ while not timeout:
             timeout = True
             break
 
-        time.sleep(1) # Do NOT change this, otherwise AWS budget will be exhausted rapidly!!!
+        time.sleep(ROUND_WAIT_DURATION) # Do NOT change this, otherwise AWS budget will be exhausted rapidly!!!
 
         # if the system runs too long, close it automatically.
         system_curr_time = time.time()
-        if system_curr_time - system_start_time >= 60:
+        if system_curr_time - system_start_time >= 5 * 60:
             timeout = True
             break
+    break
+
+if timeout:
+    print("Warning: Time out!")
+else:
+    print("Mission complete!")
