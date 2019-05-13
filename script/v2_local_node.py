@@ -62,8 +62,8 @@ def download_and_pick_a_dateset():
 ### Initialize constants
 ATTACK_MAXIMUM_ROUNDS = 10000
 
-REGISTER_WAIT_RESPONSE_SECOND = 1
-ROUND_WAIT_DURATION = 1
+REGISTER_WAIT_RESPONSE_SECOND = 0.5
+ROUND_WAIT_DURATION = 0
 
 IDENTITY = 'aa'+''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits)
                         for _ in range(6)) # Create node identity
