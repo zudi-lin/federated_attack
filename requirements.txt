@@ -1,8 +1,0 @@
-h5py
-scikit-learn
-matplotlib
-tensorboard
-tensorboardX
-boto3
-cv2
-sortedcontainers
