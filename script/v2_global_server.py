@@ -132,11 +132,19 @@ SERVER_LOCAL_AGGREGATED_IMAGES_PATH = SERVER_LOCAL_PATH + "aggregated_images/"
 SERVER_LOCAL_ADV_IMAGES_PATH = SERVER_LOCAL_PATH + "images_from_nodes/"
 SERVER_LOCAL_ORIGINAL_IMAGE_DATASET = REMOTE_ORIGINAL_IMAGE_DATASET
 
+
+
 IMAGE_FILE_SUFFIX = ".jpg"
 DATA_FILE_SUFFIX = ".h5"
 
 MINIMUM_FILE_BUFFER_SIZE = 5
 FILE_PROCESS_BATCH_SIZE = 5
+
+NO_UPDATE_MAXIMUM_ROUNDS = 1000
+
+REGISTER_WAIT_DURATION = 0
+
+ROUND_WAIT_DURATION = 1
 
 ### Clean and re-initialize local storage of the global server
 if not os.path.exists(SERVER_LOCAL_PATH):
@@ -185,8 +193,9 @@ round_cnt = 0
 adv_processed_num = {} # the number of files processed for each adv_no
 file_buffer = {}
 n_file_buffered = 0
+no_update_round = 0
 while (True):
-    time.sleep(1) # Do NOT change this, otherwise AWS budget will be exhausted rapidly!!!
+    time.sleep(REGISTER_WAIT_DURATION) # Do NOT change this, otherwise AWS budget will be exhausted rapidly!!!
     print(f"Round {round_cnt} started!")
     round_cnt += 1
 
@@ -199,9 +208,17 @@ while (True):
         print("Fetch remote directory!")
         file_buffer, n_file_buffered = get_remote_adv_file_directory(file_buffer, n_file_buffered)
 
+    if n_file_buffered <= 0: 
+        no_update_round += 1
+        print(f"No updates for {no_update_round} rounds!")
+    else: no_update_round = 0
+
+    if no_update_round >= NO_UPDATE_MAXIMUM_ROUNDS:
+        print(f"No updates for {NO_UPDATE_MAXIMUM_ROUNDS} rounds! Server terminated!")
+        break
 
     # Select a prioritized subset to download and delete the remote version after download
-    process_filename_list, file_buffer, n_file_buffered, adv_processed_num =     select_prior_files_from_file_buffer(file_buffer, n_file_buffered, adv_processed_num)
+    process_filename_list, file_buffer, n_file_buffered, adv_processed_num = select_prior_files_from_file_buffer(file_buffer, n_file_buffered, adv_processed_num)
 
     print("process_filename_list: ", process_filename_list)
     print("adv_processed_num: ", adv_processed_num)
@@ -264,10 +281,11 @@ while (True):
     ######################################################################
 
     #wait for some seconds
-    time.sleep(3)
+    time.sleep(ROUND_WAIT_DURATION)
 
     # if the system runs too long, close it automatically.
     system_curr_time = time.time()
-    if system_curr_time - system_start_time >= 5 * 60:
+    if system_curr_time - system_start_time >= 10 * 60:
         break
+
     #break

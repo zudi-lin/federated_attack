@@ -71,6 +71,14 @@ def check_prefix(client, bucket_name, prefix):
         rst = []
         for entry in rtn: rst.append(entry['Key'])
         return rst
+    
+def send_message(client, bucket_name, remote_folder_name, remote_file_name, local_file_path, message):
+    # Send the current upload bandwith to the global
+    message_file = open(local_file_path, "w")
+    message_file.write(message)
+    message_file.close()
+    upload_file(client, local_file_path, bucket_name, remote_folder_name, remote_file_name)
+    return True
 
 def time_tag(time):
     return int((time - int(time) + int(time) % 1000000 ) * 1000)
