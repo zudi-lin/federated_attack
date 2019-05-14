@@ -154,7 +154,7 @@ class GenAdv(object):
             x_adv, y_adv = AdvSolver(self.net, self.eps, self.criterion).i_fgsm(data, y, self.device, target=target)
 
         if target:
-            return x_adv, y_adv, y
+            return x_adv, y_adv
         else:
             return x_adv, y_adv
 
@@ -228,10 +228,14 @@ if __name__ == "__main__":
         net = nets[i]
         criterion = F.cross_entropy
         Generate_Adv = GenAdv(net, device, criterion)
-        x_adv, _ = Generate_Adv.generate_adv(x, y)
+        # x_adv, _ = Generate_Adv.generate_adv(x, y)
+        pseudo_target = torch.ones_like(y)
+        x_adv, y_adv = Generate_Adv.generate_adv(x, pseudo_target, target=True)
+        #print((y_adv==1).sum())
 
         print('=== Prediction results for adversarial examples of net %d' % i)
-        aar = compute_AAR(x, y, x_adv, nets, target=False)
+        # aar = compute_AAR(x, y, x_adv, nets, target=False)
+        aar = compute_AAR(x, pseudo_target, x_adv, nets, target=True)
         print(aar.item())
         fl.write('%.4f\t' % (aar.item()))
 
@@ -248,7 +252,8 @@ if __name__ == "__main__":
     x_adv_aggregate = aggregate_adv_noise(x, adv_noise)
 
     print('=== Prediction results for aggregated adversarial examples')
-    aar_aggregate = compute_AAR(x, y, x_adv_aggregate, nets, target=False)
+    # aar_aggregate = compute_AAR(x, y, x_adv_aggregate, nets, target=False)
+    aar_aggregate = compute_AAR(x, pseudo_target, x_adv_aggregate, nets, target=True)
     print(aar_aggregate.item())
     fl.write('%.4f\n' % (aar_aggregate.item()))
     fl.close()
