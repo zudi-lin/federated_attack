@@ -22,7 +22,7 @@ conda install pytorch torchvision cudatoolkit=9.0 -c pytorch
 pip install -r requirements.txt
 ```
 
-## Running
+## Usage
 
 ### Federated Attack System: 
 - First, run ```python system_script/[real_system_with_adaptive_buffer_read]global_server.py```
