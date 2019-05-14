@@ -9,10 +9,10 @@ from botocore.exceptions import ClientError
 sys.path.append(os.path.abspath('../'))
 from utils.system_utils import *
 
-ACCESS_KEY = "AKIAYSSR3P6HBYS35VUA"
-SECRET_KEY = "N2yW+zr/AURR3ampWfhEsZLMLxdF//fKNCzAD/g7"
+ACCESS_KEY = "Your_AWS_S3_ACCESS_KEY"
+SECRET_KEY = "Your_AWS_S3_SECRET_KEY"
 REGION = "us-east-1"
-BUCKET = "2019.harvard.cs244r"
+BUCKET = "Your_AWS_S3_BUCKET"
 
 client = boto3.client(
     's3',

@@ -17,15 +17,10 @@ import h5py
 import boto3
 from botocore.exceptions import ClientError
 
-# ACCESS_KEY = "AKIAYSSR3P6HBYS35VUA"
-# SECRET_KEY = "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"
-# BUCKET = "2019.harvard.cs244r"
-# REGION = "us-east-1"
-
-ACCESS_KEY = "AKIAZHARFTUU4CYJRSPM"
-SECRET_KEY = "g9YWLPja+iyIe8BUZSXIyJr0OPcfh5og+ceHHwys"
-BUCKET = "tmp201905111159"
+ACCESS_KEY = "Your_AWS_S3_ACCESS_KEY"
+SECRET_KEY = "Your_AWS_S3_SECRET_KEY"
 REGION = "us-east-1"
+BUCKET = "Your_AWS_S3_BUCKET"
 
 client = boto3.client(
     's3',
