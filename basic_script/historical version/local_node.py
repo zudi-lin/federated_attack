@@ -1,9 +1,9 @@
 ### Header classes and functions of this program
 
-from system_utils import *
+
 import time
 import random
-import os
+import os, sys
 import numpy as np
 import string
 import logging
@@ -12,7 +12,9 @@ import cv2
 import torch
 import torch.nn.functional as F
 
+sys.path.append(os.path.abspath('../'))
 from utils import preprocess_image, recreate_image
+from utils.system_utils import *
 from train_adv import *
 from botocore.exceptions import ClientError
 

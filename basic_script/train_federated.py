@@ -10,15 +10,14 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-import os
+import os, sys
 import argparse
 
-import sys
 sys.path.append(os.path.abspath('../'))
 
 from model.cifar import *
 from datasets import FederatedCIFAR10
-from utils import progress_bar
+from utils.utils import progress_bar
 
 MODEL_MAP = {'resnet18': ResNet18(),
              'vgg19': VGG('VGG19'),

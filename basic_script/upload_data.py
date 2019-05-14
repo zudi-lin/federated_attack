@@ -1,13 +1,14 @@
 '''Upload data and model weights to Amazon S3'''
 
-from system_utils import *
-import os, glob, sys
+import os, sys
 import time
 import shutil
 import logging
 import boto3
 from botocore.exceptions import ClientError
+
 sys.path.append(os.path.abspath('../'))
+from utils.system_utils import *
 
 ACCESS_KEY = "AKIAYSSR3P6HBYS35VUA"
 SECRET_KEY = "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"
@@ -23,10 +24,5 @@ client = boto3.client(
 
 response = client.list_buckets()['Buckets']
 
-model_dir = '../outputs/checkpoint/'
-model_list = glob.glob(model_dir+'*.t7')
-print('number of models: ', len(model_list))
-for item in model_list:
-    path, filename = os.path.split(item)
-    print(item, path, filename)
-    upload_file(client, item, BUCKET, 'fedrated_models/', filename)
+filename = 'adv_data.h5'
+upload_file(client, filename, BUCKET, 'adv_cifar10/', filename)

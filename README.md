@@ -16,6 +16,15 @@ conda install pytorch torchvision cudatoolkit=9.0 -c pytorch
 pip install -r requirements.txt
 ```
 
+## Running
+### Federated Attack System: 
+- First, run system_script/[real_system_with_adaptive_buffer_read]global_server.py
+- Second, run serveral job of system_script/[real_system_with_adaptive_buffer_read]local_node.py
+### Imbalanced Upload Solution Simulation:
+- First, run system_script/[imbalanced_upload_simulation]global_server.py
+- Second, run serveral job of system_script/[imbalanced_upload_simulation]local_node.py
+
+
 
 ## Visulazation
 * Visualize the training loss using [tensorboardX](https://github.com/lanpa/tensorboard-pytorch).
@@ -23,3 +32,4 @@ pip install -r requirements.txt
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/zudi-lin/adver-vis/blob/master/LICENSE) file for details.
+

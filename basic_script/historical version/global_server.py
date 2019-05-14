@@ -1,15 +1,19 @@
 ### Header classes and functions of this file
-from system_utils import *
-import os
+
+import os, sys
 import time
 import shutil
 import numpy as np
 import logging
 import boto3
 import cv2
-from utils import preprocess_image, recreate_image
+
+from utils.utils import preprocess_image, recreate_image
+from utils.system_utils import *
+sys.path.append(os.path.abspath('../'))
 from train_adv import aggregate_adv_noise
 from botocore.exceptions import ClientError
+
 
 ACCESS_KEY = "AKIAYSSR3P6HBYS35VUA"
 SECRET_KEY = "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"

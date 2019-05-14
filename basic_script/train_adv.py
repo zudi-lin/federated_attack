@@ -19,7 +19,7 @@ from torchvision.utils import save_image
 import torchvision
 import torchvision.transforms as transforms
 
-from utils import recreate_image
+from utils.utils import recreate_image
 
 from model.cifar import *
 

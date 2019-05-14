@@ -18,7 +18,7 @@ sys.path.append(os.path.abspath('../'))
 
 #from model.densenet import DenseNet
 from model.cifar import *
-from utils import progress_bar
+from utils.utils import progress_bar
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
