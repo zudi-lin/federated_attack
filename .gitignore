@@ -116,7 +116,6 @@ dmypy.json
 # data
 data/
 *.h5
-*.txt
 logs/
 outputs/
 *.ipynb
